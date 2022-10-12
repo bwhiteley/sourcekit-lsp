@@ -109,7 +109,7 @@ extension SwiftLanguageServer {
         return completion(.failure(.responseError(ResponseError(result.failure!))))
       }
 
-      guard let _: sourcekitd_uid_t = dict[keys.kind] else {
+      guard let kind: sourcekitd_uid_t = dict[keys.kind] else {
         // Nothing to report.
         return completion(.success(nil))
       }
@@ -130,7 +130,8 @@ extension SwiftLanguageServer {
           name: dict[keys.name],
           containerName: nil,
           usr: dict[keys.usr],
-          bestLocalDeclaration: location),
+          bestLocalDeclaration: location,
+          isModule: kind == self.sourcekitd.values.ref_module),
         annotatedDeclaration: dict[keys.annotated_decl],
         documentationXML: dict[keys.doc_full_as_xml],
         refactorActions:
