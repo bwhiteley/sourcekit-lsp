@@ -524,6 +524,10 @@ extension ClangLanguageServerShim {
     }
   }
 
+  func openInterface(_ request: Request<OpenInterfaceRequest>) {
+    request.reply(.failure(.unknown("unsupported method")))
+  }
+
   // MARK: - Other
 
   func executeCommand(_ req: Request<ExecuteCommandRequest>) {
