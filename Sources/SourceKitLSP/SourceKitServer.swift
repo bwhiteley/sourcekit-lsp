@@ -1267,6 +1267,23 @@ extension SourceKitServer {
     let symbolInfo = SymbolInfoRequest(textDocument: req.params.textDocument, position: req.params.position)
     let index = self.workspaceForDocument(uri: req.params.textDocument.uri)?.index
     let callback = callbackOnQueue(self.queue) { (result: LSPResult<SymbolInfoRequest.Response>) in
+
+      // If this symbol is a module then generate a textual interface
+      if case .success(let symbols) = result, let symbol = symbols.first, symbol.isModule, let name = symbol.name {
+        let openInterface = OpenInterfaceRequest(textDocument: req.params.textDocument, name: name)
+        let request = Request(openInterface, id: req.id, clientID: ObjectIdentifier(self),
+                              cancellation: req.cancellationToken, reply: { (result: Result<OpenInterfaceRequest.Response, ResponseError>) in
+          guard let interfaceDetails = result.success ?? nil else {
+            req.reply(.failure(result.failure!))
+            return
+          }
+          let loc = Location(uri: interfaceDetails.uri, range: Range(Position(line: 0, utf16index: 0)))
+          req.reply(.locations([loc]))
+        })
+        languageService.openInterface(request)
+        return
+      }
+
       let extractedResult = self.extractIndexedOccurrences(result: result, index: index, useLocalFallback: true) { (usr, index) in
         log("performing indexed jump-to-def with usr \(usr)")
         var occurs = index.occurrences(ofUSR: usr, roles: [.definition])
