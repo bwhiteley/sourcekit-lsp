@@ -1269,7 +1269,7 @@ extension SourceKitServer {
     let callback = callbackOnQueue(self.queue) { (result: LSPResult<SymbolInfoRequest.Response>) in
 
       // If this symbol is a module then generate a textual interface
-      if case .success(let symbols) = result, let symbol = symbols.first, symbol.isModule, let name = symbol.name {
+      if case .success(let symbols) = result, let symbol = symbols.first, symbol.isModule == true, let name = symbol.name {
         let openInterface = OpenInterfaceRequest(textDocument: req.params.textDocument, name: name)
         let request = Request(openInterface, id: req.id, clientID: ObjectIdentifier(self),
                               cancellation: req.cancellationToken, reply: { (result: Result<OpenInterfaceRequest.Response, ResponseError>) in

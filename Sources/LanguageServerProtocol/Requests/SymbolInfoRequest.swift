@@ -79,7 +79,7 @@ public struct SymbolDetails: ResponseType, Hashable {
   public var bestLocalDeclaration: Location? = nil
 
   /// True if this symbol refers to a module.
-  public var isModule: Bool = false
+  public var isModule: Bool? = false
 
   public init(
     name: String?,
