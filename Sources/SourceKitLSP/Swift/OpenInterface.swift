@@ -45,14 +45,17 @@ extension SwiftLanguageServer {
         }
         
         // FIXME: use some configurable path here
-        let path = NSTemporaryDirectory() + "/" + uuid + ".swift"
+        let tempFolderURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        let genFolder = tempFolderURL.appendingPathComponent("GeneratedInterfaces", isDirectory: true)
+        let filePath = genFolder.appendingPathComponent("\(moduleName).swift")
         do {
-          try interfaceInfo.contents?.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
+          try FileManager.default.createDirectory(at: genFolder, withIntermediateDirectories: true)
+          try interfaceInfo.contents?.write(to: filePath, atomically: true, encoding: String.Encoding.utf8)
         } catch {
           request.reply(.failure(ResponseError.unknown(error.localizedDescription)))
         }
         
-        let uri = DocumentURI(URL(fileURLWithPath: path))
+        let uri = DocumentURI(filePath)
         textualInterfaces[moduleName] = uri
         request.reply(.success(InterfaceDetails(uri: uri)))
       }
