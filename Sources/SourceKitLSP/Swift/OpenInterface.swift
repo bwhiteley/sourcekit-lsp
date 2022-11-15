@@ -35,7 +35,7 @@ extension SwiftLanguageServer {
         return
       }
       
-      self._openInterface(uri, moduleName, uuid) { result in
+      self._openInterface(request, uri, moduleName, uuid) { result in
         guard let interfaceInfo = result.success ?? nil else {
           if let error = result.failure {
             log("open interface failed: \(error)", level: .warning)
@@ -62,7 +62,8 @@ extension SwiftLanguageServer {
     }
   }
   
-  private func _openInterface(_ uri: DocumentURI,
+  private func _openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>,
+                              _ uri: DocumentURI,
                               _ name: String,
                               _ uuid: String,
                               _ completion: @escaping (Swift.Result<InterfaceInfo?, SKDError>) -> Void) {
@@ -84,8 +85,10 @@ extension SwiftLanguageServer {
       return completion(.success(InterfaceInfo(contents: dict[keys.sourcetext])))
     }
     
-    // FIXME: cancellation
-    _ = handle
+    if let handle = handle {
+      request.cancellationToken.addCancellationHandler { [weak self] in
+        self?.sourcekitd.cancel(handle)
+      }
+    }
   }
-    
 }
