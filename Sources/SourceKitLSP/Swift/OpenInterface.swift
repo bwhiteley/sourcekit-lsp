@@ -78,11 +78,12 @@ extension SwiftLanguageServer {
     }
 
     let handle = self.sourcekitd.send(skreq, self.queue) { result in
-      guard let dict = result.success else {
-        return completion(.failure(result.failure!))
+      switch result {
+      case .success(let dict):
+        return completion(.success(InterfaceInfo(contents: dict[keys.sourcetext])))
+      case .failure(let error):
+        return completion(.failure(error))
       }
-      
-      return completion(.success(InterfaceInfo(contents: dict[keys.sourcetext])))
     }
     
     if let handle = handle {
