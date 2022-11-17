@@ -1600,6 +1600,8 @@ extension sourcekitd_uid_t {
       case vals.decl_extension:
         // There are no extensions in LSP, so I return something vaguely similar
         return .namespace
+      case vals.ref_module:
+        return .module
       default:
         return nil
     }

@@ -78,20 +78,20 @@ public struct SymbolDetails: ResponseType, Hashable {
   /// translation unit.
   public var bestLocalDeclaration: Location? = nil
 
-  /// True if this symbol refers to a module.
-  public var isModule: Bool? = false
+  /// The kind of the symbol
+  public var kind: SymbolKind?
 
   public init(
     name: String?,
     containerName: String? = nil,
     usr: String?,
     bestLocalDeclaration: Location? = nil,
-    isModule: Bool = false)
+    kind: SymbolKind? = nil)
   {
     self.name = name
     self.containerName = containerName
     self.usr = usr
     self.bestLocalDeclaration = bestLocalDeclaration
-    self.isModule = isModule
+    self.kind = kind
   }
 }
