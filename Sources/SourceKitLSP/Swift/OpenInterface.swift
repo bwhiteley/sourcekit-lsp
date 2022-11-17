@@ -22,12 +22,9 @@ struct InterfaceInfo {
 private var textualInterfaces: [String:DocumentURI] = [:]
 
 extension SwiftLanguageServer {
-
   public func openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>) {
     let uri = request.params.textDocument.uri
     let moduleName = request.params.name
-    let uuid = NSUUID().uuidString
-        
     self.queue.async {
       
       if let uri = textualInterfaces[moduleName] {
@@ -35,7 +32,9 @@ extension SwiftLanguageServer {
         return
       }
       
-      self._openInterface(request, uri, moduleName, uuid) { result in
+      let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swift")
+      let interfaceDocURI = DocumentURI(interfaceFilePath)
+      self._openInterface(request, uri, moduleName, interfaceDocURI) { result in
         guard let interfaceInfo = result.success ?? nil else {
           if let error = result.failure {
             log("open interface failed: \(error)", level: .warning)
@@ -44,20 +43,13 @@ extension SwiftLanguageServer {
           return
         }
         
-        // FIXME: use some configurable path here
-        let tempFolderURL = URL(fileURLWithPath: NSTemporaryDirectory())
-        let genFolder = tempFolderURL.appendingPathComponent("GeneratedInterfaces", isDirectory: true)
-        let filePath = genFolder.appendingPathComponent("\(moduleName).swift")
         do {
-          try FileManager.default.createDirectory(at: genFolder, withIntermediateDirectories: true)
-          try interfaceInfo.contents?.write(to: filePath, atomically: true, encoding: String.Encoding.utf8)
+          try interfaceInfo.contents?.write(to: interfaceFilePath, atomically: true, encoding: String.Encoding.utf8)
+          textualInterfaces[moduleName] = interfaceDocURI
+          request.reply(.success(InterfaceDetails(uri: interfaceDocURI)))
         } catch {
           request.reply(.failure(ResponseError.unknown(error.localizedDescription)))
         }
-        
-        let uri = DocumentURI(filePath)
-        textualInterfaces[moduleName] = uri
-        request.reply(.success(InterfaceDetails(uri: uri)))
       }
     }
   }
@@ -65,18 +57,18 @@ extension SwiftLanguageServer {
   private func _openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>,
                               _ uri: DocumentURI,
                               _ name: String,
-                              _ uuid: String,
+                              _ interfaceURI: DocumentURI,
                               _ completion: @escaping (Swift.Result<InterfaceInfo?, SKDError>) -> Void) {
     let keys = self.keys
     let skreq = SKDRequestDictionary(sourcekitd: sourcekitd)
     skreq[keys.request] = requests.editor_open_interface
     skreq[keys.modulename] = name
-    skreq[keys.name] = uuid
+    skreq[keys.name] = interfaceURI.pseudoPath
     skreq[keys.synthesizedextensions] = 1
     if let compileCommand = self.commandsByFile[uri] {
       skreq[keys.compilerargs] = compileCommand.compilerArgs
     }
-
+    
     let handle = self.sourcekitd.send(skreq, self.queue) { result in
       switch result {
       case .success(let dict):

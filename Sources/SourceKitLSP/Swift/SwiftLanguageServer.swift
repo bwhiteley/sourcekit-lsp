@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import Dispatch
-import struct Foundation.CharacterSet
 import LanguageServerProtocol
 import LSPLogging
 import SKCore
@@ -106,6 +106,8 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
   let clientCapabilities: ClientCapabilities
 
   let serverOptions: SourceKitServer.Options
+  
+  let generatedInterfacesPath: URL
 
   // FIXME: ideally we wouldn't need separate management from a parent server in the same process.
   var documentManager: DocumentManager
@@ -154,6 +156,7 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
     self.documentManager = DocumentManager()
     self.state = .connected
     self.reopenDocuments = reopenDocuments
+    self.generatedInterfacesPath = try SwiftLanguageServer.generatedInterfacesPath()
   }
 
   public func canHandle(workspace: Workspace) -> Bool {
@@ -258,6 +261,20 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
         return nil
       }
     })
+  }
+  
+  /// Obtain the path of the directory to write generated module interfaces.
+  private static func generatedInterfacesPath() throws -> URL {
+    if let path = ProcessInfo.processInfo.environment["SOURCEKIT_GENERATED_INTERFACES_PATH"] {
+      let url = URL(fileURLWithPath: path)
+      try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+      return url
+    } else {
+      let tempFolderURL = URL(fileURLWithPath: NSTemporaryDirectory())
+      let genFolder = tempFolderURL.appendingPathComponent("GeneratedInterfaces", isDirectory: true)
+      try FileManager.default.createDirectory(at: genFolder, withIntermediateDirectories: true)
+      return genFolder
+    }
   }
 
   /// Publish diagnostics for the given `snapshot`. We withhold semantic diagnostics if we are using
