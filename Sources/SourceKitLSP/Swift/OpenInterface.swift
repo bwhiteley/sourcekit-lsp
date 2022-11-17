@@ -16,7 +16,7 @@ import LanguageServerProtocol
 import LSPLogging
 
 struct InterfaceInfo {
-  var contents: String?
+  var contents: String
 }
 
 private var textualInterfaces: [String:DocumentURI] = [:]
@@ -35,20 +35,18 @@ extension SwiftLanguageServer {
       let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swift")
       let interfaceDocURI = DocumentURI(interfaceFilePath)
       self._openInterface(request, uri, moduleName, interfaceDocURI) { result in
-        guard let interfaceInfo = result.success ?? nil else {
-          if let error = result.failure {
-            log("open interface failed: \(error)", level: .warning)
+        switch result {
+        case .success(let interfaceInfo):
+          do {
+            try interfaceInfo.contents.write(to: interfaceFilePath, atomically: true, encoding: String.Encoding.utf8)
+            textualInterfaces[moduleName] = interfaceDocURI
+            request.reply(.success(InterfaceDetails(uri: interfaceDocURI)))
+          } catch {
+            request.reply(.failure(ResponseError.unknown(error.localizedDescription)))
           }
-          request.reply(.failure(ResponseError(result.failure!)))
-          return
-        }
-        
-        do {
-          try interfaceInfo.contents?.write(to: interfaceFilePath, atomically: true, encoding: String.Encoding.utf8)
-          textualInterfaces[moduleName] = interfaceDocURI
-          request.reply(.success(InterfaceDetails(uri: interfaceDocURI)))
-        } catch {
-          request.reply(.failure(ResponseError.unknown(error.localizedDescription)))
+        case .failure(let error):
+          log("open interface failed: \(error)", level: .warning)
+          request.reply(.failure(ResponseError(error)))
         }
       }
     }
@@ -58,7 +56,7 @@ extension SwiftLanguageServer {
                               _ uri: DocumentURI,
                               _ name: String,
                               _ interfaceURI: DocumentURI,
-                              _ completion: @escaping (Swift.Result<InterfaceInfo?, SKDError>) -> Void) {
+                              _ completion: @escaping (Swift.Result<InterfaceInfo, SKDError>) -> Void) {
     let keys = self.keys
     let skreq = SKDRequestDictionary(sourcekitd: sourcekitd)
     skreq[keys.request] = requests.editor_open_interface
@@ -72,7 +70,7 @@ extension SwiftLanguageServer {
     let handle = self.sourcekitd.send(skreq, self.queue) { result in
       switch result {
       case .success(let dict):
-        return completion(.success(InterfaceInfo(contents: dict[keys.sourcetext])))
+        return completion(.success(InterfaceInfo(contents: dict[keys.sourcetext] ?? "")))
       case .failure(let error):
         return completion(.failure(error))
       }
