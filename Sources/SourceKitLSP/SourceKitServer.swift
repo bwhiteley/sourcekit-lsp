@@ -1273,12 +1273,13 @@ extension SourceKitServer {
         let openInterface = OpenInterfaceRequest(textDocument: req.params.textDocument, name: name)
         let request = Request(openInterface, id: req.id, clientID: ObjectIdentifier(self),
                               cancellation: req.cancellationToken, reply: { (result: Result<OpenInterfaceRequest.Response, ResponseError>) in
-          guard let interfaceDetails = result.success ?? nil else {
-            req.reply(.failure(result.failure!))
-            return
+          switch result {
+          case .success(let interfaceDetails):
+            let loc = Location(uri: interfaceDetails.uri, range: Range(Position(line: 0, utf16index: 0)))
+            req.reply(.locations([loc]))
+          case .failure(let error):
+            req.reply(.failure(error))
           }
-          let loc = Location(uri: interfaceDetails.uri, range: Range(Position(line: 0, utf16index: 0)))
-          req.reply(.locations([loc]))
         })
         languageService.openInterface(request)
         return
