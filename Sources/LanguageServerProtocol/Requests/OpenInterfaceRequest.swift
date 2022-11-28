@@ -11,11 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 /// Request a textual interface of a module to display in the IDE.
+/// **(LSP Extension)**
 public struct OpenInterfaceRequest: TextDocumentRequest, Hashable {
   public static let method: String = "textDocument/openInterface"
   public typealias Response = InterfaceDetails
 
-  /// The document in which to lookup the module.
+  /// The document whose compiler arguments should be used to generate the interface.
   public var textDocument: TextDocumentIdentifier
 
   /// The module to generate an index for.
@@ -32,8 +33,7 @@ public struct InterfaceDetails: ResponseType, Hashable {
 
   public var uri: DocumentURI
 
-  public init(uri: DocumentURI)
-  {
+  public init(uri: DocumentURI) {
     self.uri = uri
   }
 }

@@ -19,14 +19,13 @@ struct InterfaceInfo {
   var contents: String
 }
 
-private var textualInterfaces: [String:DocumentURI] = [:]
+private var textualInterfaces: [String: DocumentURI] = [:]
 
 extension SwiftLanguageServer {
   public func openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>) {
     let uri = request.params.textDocument.uri
     let moduleName = request.params.name
     self.queue.async {
-      
       if let uri = textualInterfaces[moduleName] {
         request.reply(.success(InterfaceDetails(uri: uri)))
         return
@@ -34,7 +33,7 @@ extension SwiftLanguageServer {
       
       let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swift")
       let interfaceDocURI = DocumentURI(interfaceFilePath)
-      self._openInterface(request, uri, moduleName, interfaceDocURI) { result in
+      self._openInterface(request: request, uri: uri, name: moduleName, interfaceURI: interfaceDocURI) { result in
         switch result {
         case .success(let interfaceInfo):
           do {
@@ -51,12 +50,20 @@ extension SwiftLanguageServer {
       }
     }
   }
-  
-  private func _openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>,
-                              _ uri: DocumentURI,
-                              _ name: String,
-                              _ interfaceURI: DocumentURI,
-                              _ completion: @escaping (Swift.Result<InterfaceInfo, SKDError>) -> Void) {
+    
+  /// Open the Swift interface for a module.
+  ///
+  /// - Parameters:
+  ///   - request: The OpenInterfaceRequest.
+  ///   - uri: The document currently being edited.
+  ///   - name: The module name.
+  ///   - interfaceURI:The file where the generated interface should be written.
+  ///   - completion: Completion block to asynchronously receive the InterfaceInfo, or error.
+  private func _openInterface(request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>,
+                              uri: DocumentURI,
+                              name: String,
+                              interfaceURI: DocumentURI,
+                              completion: @escaping (Swift.Result<InterfaceInfo, SKDError>) -> Void) {
     let keys = self.keys
     let skreq = SKDRequestDictionary(sourcekitd: sourcekitd)
     skreq[keys.request] = requests.editor_open_interface

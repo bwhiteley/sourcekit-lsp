@@ -107,6 +107,7 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
 
   let serverOptions: SourceKitServer.Options
   
+  /// Directory where generated Swift interfaces will be stored.
   let generatedInterfacesPath: URL
 
   // FIXME: ideally we wouldn't need separate management from a parent server in the same process.
