@@ -130,14 +130,6 @@ SOURCEKIT_LOGGING="N"
 
 Where "N" configures the log verbosity and is one of the following numbers: 0 (error), 1 (warning), 2 (info), or 3 (debug).
 
-## Generated Interface Files
-
-By default, generated Swift interface files for modules are stored under the system temporary directory for the current user. This can be changed by setting the following environment variable:
-
-```sh
-SOURCEKIT_GENERATED_INTERFACES_PATH="/some/path"
-```
-
 ## Writing Tests
 
 As much as is practical, all code should be covered by tests. New tests can be added under the `Tests` directory and should use `XCTest`. The rest of this section will describe the additional tools available in the `SKTestSupport` module to make it easier to write good and efficient tests.

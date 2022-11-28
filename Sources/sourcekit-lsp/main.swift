@@ -130,6 +130,11 @@ struct Main: ParsableCommand {
   )
   var indexPrefixMappings = [PathPrefixMapping]()
 
+  @Option(
+    name: .customLong("generated-interfaces-path", withSingleDash: true),
+    help: "Override the default directory where generated interfaces will be stored"
+  )
+  var generatedInterfacesPath: AbsolutePath?
 
   @Option(
     help: "Whether to enable server-side filtering in code-completion"
@@ -156,6 +161,7 @@ struct Main: ParsableCommand {
     serverOptions.indexOptions.indexPrefixMappings = indexPrefixMappings
     serverOptions.completionOptions.serverSideFiltering = completionServerSideFiltering
     serverOptions.completionOptions.maxResults = completionMaxResults
+    serverOptions.generatedInterfacesPath = generatedInterfacesPath
 
     return serverOptions
   }

@@ -157,7 +157,7 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
     self.documentManager = DocumentManager()
     self.state = .connected
     self.reopenDocuments = reopenDocuments
-    self.generatedInterfacesPath = try SwiftLanguageServer.generatedInterfacesPath()
+    self.generatedInterfacesPath = try SwiftLanguageServer.generatedInterfacesPath(overrideInterfacesPath: options.generatedInterfacesPath?.asURL)
   }
 
   public func canHandle(workspace: Workspace) -> Bool {
@@ -265,11 +265,10 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
   }
   
   /// Obtain the path of the directory to write generated module interfaces.
-  private static func generatedInterfacesPath() throws -> URL {
-    if let path = ProcessInfo.processInfo.environment["SOURCEKIT_GENERATED_INTERFACES_PATH"] {
-      let url = URL(fileURLWithPath: path)
-      try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-      return url
+  private static func generatedInterfacesPath(overrideInterfacesPath: URL?) throws -> URL {
+    if let overridePath = overrideInterfacesPath {
+      try FileManager.default.createDirectory(at: overridePath, withIntermediateDirectories: true)
+      return overridePath
     } else {
       let tempFolderURL = URL(fileURLWithPath: NSTemporaryDirectory())
       let genFolder = tempFolderURL.appendingPathComponent("GeneratedInterfaces", isDirectory: true)
