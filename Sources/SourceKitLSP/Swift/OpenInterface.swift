@@ -19,18 +19,11 @@ struct InterfaceInfo {
   var contents: String
 }
 
-private var textualInterfaces: [String: DocumentURI] = [:]
-
 extension SwiftLanguageServer {
   public func openInterface(_ request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>) {
     let uri = request.params.textDocument.uri
     let moduleName = request.params.name
     self.queue.async {
-      if let uri = textualInterfaces[moduleName] {
-        request.reply(.success(InterfaceDetails(uri: uri)))
-        return
-      }
-      
       let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swiftinterface")
       let interfaceDocURI = DocumentURI(interfaceFilePath)
       self._openInterface(request: request, uri: uri, name: moduleName, interfaceURI: interfaceDocURI) { result in
@@ -38,7 +31,6 @@ extension SwiftLanguageServer {
         case .success(let interfaceInfo):
           do {
             try interfaceInfo.contents.write(to: interfaceFilePath, atomically: true, encoding: String.Encoding.utf8)
-            textualInterfaces[moduleName] = interfaceDocURI
             request.reply(.success(InterfaceDetails(uri: interfaceDocURI)))
           } catch {
             request.reply(.failure(ResponseError.unknown(error.localizedDescription)))
