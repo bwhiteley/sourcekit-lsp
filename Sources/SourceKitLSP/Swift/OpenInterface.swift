@@ -31,7 +31,7 @@ extension SwiftLanguageServer {
         return
       }
       
-      let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swift")
+      let interfaceFilePath = self.generatedInterfacesPath.appendingPathComponent("\(moduleName).swiftinterface")
       let interfaceDocURI = DocumentURI(interfaceFilePath)
       self._openInterface(request: request, uri: uri, name: moduleName, interfaceURI: interfaceDocURI) { result in
         switch result {
