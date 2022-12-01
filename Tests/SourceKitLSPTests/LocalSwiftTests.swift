@@ -1314,7 +1314,7 @@ final class LocalSwiftTests: XCTestCase {
       }
       XCTAssertEqual(locations.count, 1)
       let location = try XCTUnwrap(locations.first)
-      XCTAssertTrue(location.uri.pseudoPath.hasSuffix("/Foundation.swift"))
+      XCTAssertTrue(location.uri.pseudoPath.hasSuffix("/Foundation.swiftinterface"))
       let fileContents = try XCTUnwrap(location.uri.fileURL.flatMap({ try String(contentsOf: $0, encoding: .utf8) }))
       XCTAssertTrue(fileContents.hasPrefix("import "))
     }
