@@ -47,9 +47,9 @@ extension SwiftLanguageServer {
   ///
   /// - Parameters:
   ///   - request: The OpenInterfaceRequest.
-  ///   - uri: The document currently being edited.
-  ///   - name: The module name.
-  ///   - interfaceURI:The file where the generated interface should be written.
+  ///   - uri: The document whose compiler arguments should be used to generate the interface.
+  ///   - name: The name of the module whose interface should be generated.
+  ///   - interfaceURI: The file where the generated interface should be written.
   ///   - completion: Completion block to asynchronously receive the InterfaceInfo, or error.
   private func _openInterface(request: LanguageServerProtocol.Request<LanguageServerProtocol.OpenInterfaceRequest>,
                               uri: DocumentURI,
