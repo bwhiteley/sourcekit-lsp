@@ -1291,35 +1291,6 @@ final class LocalSwiftTests: XCTestCase {
     }
   }
   
-  func testGeneratedModuleInterface() throws {
-    let url = URL(fileURLWithPath: "/\(UUID())/a.swift")
-    let uri = DocumentURI(url)
-
-    sk.send(DidOpenTextDocumentNotification(textDocument: TextDocumentItem(
-      uri: uri,
-      language: .swift,
-      version: 1,
-      text: """
-      import Foundation
-      """)))
-
-    do {
-      let _resp = try sk.sendSync(DefinitionRequest(
-        textDocument: TextDocumentIdentifier(url),
-        position: Position(line: 0, utf16index: 10)))
-      let resp = try XCTUnwrap(_resp)
-      guard case .locations(let locations) = resp else {
-        XCTFail("Unexpected response: \(resp)")
-        return
-      }
-      XCTAssertEqual(locations.count, 1)
-      let location = try XCTUnwrap(locations.first)
-      XCTAssertTrue(location.uri.pseudoPath.hasSuffix("/Foundation.swiftinterface"))
-      let fileContents = try XCTUnwrap(location.uri.fileURL.flatMap({ try String(contentsOf: $0, encoding: .utf8) }))
-      XCTAssertTrue(fileContents.hasPrefix("import "))
-    }
-  }
-
   func testDocumentSymbolHighlight() throws {
     let url = URL(fileURLWithPath: "/\(UUID())/a.swift")
     let uri = DocumentURI(url)
