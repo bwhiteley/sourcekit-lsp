@@ -71,12 +71,13 @@ final class CodingTests: XCTestCase {
     """)
 
     checkMessageCoding(InitializeResult(capabilities: ServerCapabilities(
-      textDocumentSync: TextDocumentSyncOptions(
+      textDocumentSync: .options(TextDocumentSyncOptions(
         openClose: true,
         change: .incremental,
         willSave: true,
         willSaveWaitUntil: false,
-        save: .value(TextDocumentSyncOptions.SaveOptions(includeText: false))),
+        save: .value(TextDocumentSyncOptions.SaveOptions(includeText: false))
+      )),
       completionProvider: CompletionOptions(
         resolveProvider: false,
         triggerCharacters: ["."]))), id: .number(2), json: """
@@ -109,7 +110,7 @@ final class CodingTests: XCTestCase {
     {
       "error" : {
         "code" : -32800,
-        "message" : "request cancelled"
+        "message" : "request cancelled by client"
       },
       "id" : 2,
       "jsonrpc" : "2.0"
@@ -131,7 +132,7 @@ final class CodingTests: XCTestCase {
     {
       "error" : {
         "code" : -32800,
-        "message" : "request cancelled"
+        "message" : "request cancelled by client"
       },
       "id" : null,
       "jsonrpc" : "2.0"

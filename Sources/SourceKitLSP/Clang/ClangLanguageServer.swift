@@ -389,9 +389,7 @@ extension ClangLanguageServerShim {
   }
 
   public func didSaveDocument(_ note: DidSaveTextDocumentNotification) {
-    if capabilities?.textDocumentSync?.save?.isSupported == true {
-      forwardNotificationToClangdOnQueue(note)
-    }
+    forwardNotificationToClangdOnQueue(note)
   }
 
   // MARK: - Build System Integration
@@ -431,7 +429,7 @@ extension ClangLanguageServerShim {
     // with `forceRebuild` set in case any missing header files have been added.
     // This works well for us as the moment since clangd ignores the document version.
     let note = DidChangeTextDocumentNotification(
-      textDocument: VersionedTextDocumentIdentifier(uri, version: nil),
+      textDocument: VersionedTextDocumentIdentifier(uri, version: 0),
       contentChanges: [],
       forceRebuild: true)
     forwardNotificationToClangdOnQueue(note)

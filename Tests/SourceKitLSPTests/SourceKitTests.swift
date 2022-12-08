@@ -37,7 +37,11 @@ final class SKTests: XCTestCase {
         trace: .off,
         workspaceFolders: nil))
 
-      XCTAssertEqual(initResult.capabilities.textDocumentSync?.openClose, true)
+      guard case .options(let syncOptions) = initResult.capabilities.textDocumentSync else {
+        XCTFail("Unexpected textDocumentSync property")
+        return
+      }
+      XCTAssertEqual(syncOptions.openClose, true)
       XCTAssertNotNil(initResult.capabilities.completionProvider)
     }
 
@@ -56,7 +60,11 @@ final class SKTests: XCTestCase {
         trace: .off,
         workspaceFolders: nil))
 
-      XCTAssertEqual(initResult.capabilities.textDocumentSync?.openClose, true)
+      guard case .options(let syncOptions) = initResult.capabilities.textDocumentSync else {
+        XCTFail("Unexpected textDocumentSync property")
+        return
+      }
+      XCTAssertEqual(syncOptions.openClose, true)
       XCTAssertNotNil(initResult.capabilities.completionProvider)
     }
 
@@ -175,22 +183,20 @@ final class SKTests: XCTestCase {
         label: "method(a: Int)",
         kind: .method,
         detail: "Void",
-        sortText: nil,
+        deprecated: false, sortText: nil,
         filterText: "method(a:)",
-        textEdit: TextEdit(range: Position(line: 1, utf16index: 14)..<Position(line: 1, utf16index: 14), newText: "method(a: )"),
         insertText: "method(a: )",
         insertTextFormat: .plain,
-        deprecated: false),
+        textEdit: .textEdit(TextEdit(range: Position(line: 1, utf16index: 14)..<Position(line: 1, utf16index: 14), newText: "method(a: )"))),
       CompletionItem(
         label: "self",
         kind: .keyword,
         detail: "A",
-        sortText: nil,
+        deprecated: false, sortText: nil,
         filterText: "self",
-        textEdit: TextEdit(range: Position(line: 1, utf16index: 14)..<Position(line: 1, utf16index: 14), newText: "self"),
         insertText: "self",
         insertTextFormat: .plain,
-        deprecated: false),
+        textEdit: .textEdit(TextEdit(range: Position(line: 1, utf16index: 14)..<Position(line: 1, utf16index: 14), newText: "self"))),
     ])
   }
 

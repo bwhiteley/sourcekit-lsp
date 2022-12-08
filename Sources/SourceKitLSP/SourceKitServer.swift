@@ -389,7 +389,15 @@ public final class SourceKitServer: LanguageServer {
         for: resp.capabilities, languages: languages, registry: workspace.capabilityRegistry)
 
       // FIXME: store the server capabilities.
-      let syncKind = resp.capabilities.textDocumentSync?.change ?? .incremental
+      var syncKind: TextDocumentSyncKind
+      switch resp.capabilities.textDocumentSync {
+      case .options(let options):
+        syncKind = options.change ?? .incremental
+      case .kind(let kind):
+        syncKind = kind
+      default:
+        syncKind = .incremental
+      }
       guard syncKind == .incremental else {
         fatalError("non-incremental update not implemented")
       }
@@ -637,21 +645,18 @@ extension SourceKitServer {
       executeCommandOptions = ExecuteCommandOptions(commands: builtinSwiftCommands)
     }
     return ServerCapabilities(
-      textDocumentSync: TextDocumentSyncOptions(
+      textDocumentSync: .options(TextDocumentSyncOptions(
         openClose: true,
-        change: .incremental,
-        willSave: true,
-        willSaveWaitUntil: false,
-        save: .value(TextDocumentSyncOptions.SaveOptions(includeText: false))
-      ),
-      hoverProvider: true,
+        change: .incremental
+      )),
+      hoverProvider: .bool(true),
       completionProvider: completionOptions,
-      definitionProvider: true,
+      definitionProvider: .bool(true),
       implementationProvider: .bool(true),
-      referencesProvider: true,
-      documentHighlightProvider: true,
-      documentSymbolProvider: true,
-      workspaceSymbolProvider: true,
+      referencesProvider: .bool(true),
+      documentHighlightProvider: .bool(true),
+      documentSymbolProvider: .bool(true),
+      workspaceSymbolProvider: .bool(true),
       codeActionProvider: .value(CodeActionServerCapabilities(
         clientCapabilities: client.textDocument?.codeAction,
         codeActionOptions: CodeActionOptions(codeActionKinds: nil),
@@ -1021,7 +1026,7 @@ extension SourceKitServer {
   func workspaceSymbols(_ req: Request<WorkspaceSymbolsRequest>) {
     let symbols = findWorkspaceSymbols(
       matching: req.params.query
-    ).map({symbolOccurrence -> SymbolInformation in
+    ).map({symbolOccurrence -> WorkspaceSymbolItem in
       let symbolPosition = Position(
         line: symbolOccurrence.location.line - 1, // 1-based -> 0-based
         // FIXME: we need to convert the utf8/utf16 column, which may require reading the file!
@@ -1031,13 +1036,13 @@ extension SourceKitServer {
         uri: DocumentURI(URL(fileURLWithPath: symbolOccurrence.location.path)),
         range: Range(symbolPosition))
 
-      return SymbolInformation(
+      return .symbolInformation(SymbolInformation(
         name: symbolOccurrence.symbol.name,
         kind: symbolOccurrence.symbol.kind.asLspSymbolKind(),
         deprecated: nil,
         location: symbolLocation,
         containerName: symbolOccurrence.getContainerName()
-      )
+      ))
     })
     req.reply(symbols)
   }

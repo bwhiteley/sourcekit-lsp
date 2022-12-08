@@ -342,21 +342,19 @@ extension SwiftLanguageServer {
     sourcekitd.addNotificationHandler(self)
 
     return InitializeResult(capabilities: ServerCapabilities(
-      textDocumentSync: TextDocumentSyncOptions(
+      textDocumentSync: .options(TextDocumentSyncOptions(
         openClose: true,
-        change: .incremental,
-        willSave: true,
-        willSaveWaitUntil: false,
-        save: .value(TextDocumentSyncOptions.SaveOptions(includeText: false))),
-      hoverProvider: true,
+        change: .incremental
+      )),
+      hoverProvider: .bool(true),
       completionProvider: CompletionOptions(
         resolveProvider: false,
         triggerCharacters: [".", "("]),
       definitionProvider: nil,
       implementationProvider: .bool(true),
       referencesProvider: nil,
-      documentHighlightProvider: true,
-      documentSymbolProvider: true,
+      documentHighlightProvider: .bool(true),
+      documentSymbolProvider: .bool(true),
       codeActionProvider: .value(CodeActionServerCapabilities(
         clientCapabilities: initialize.capabilities.textDocument?.codeAction,
         codeActionOptions: CodeActionOptions(codeActionKinds: [.quickFix, .refactor]),
@@ -591,7 +589,7 @@ extension SwiftLanguageServer {
     let position = req.params.position
     cursorInfo(uri, position..<position) { result in
       guard let cursorInfo: CursorInfo = result.success ?? nil else {
-        if let error = result.failure, error != .responseError(.cancelled) {
+        if let error = result.failure, error != .responseError(.serverCancelled) {
           log("cursor info failed \(uri):\(position): \(error)", level: .warning)
         }
         return req.reply(nil)
@@ -1300,11 +1298,6 @@ extension SwiftLanguageServer {
   }
 
   public func inlayHint(_ req: Request<InlayHintRequest>) {
-    guard req.params.only?.contains(.type) ?? true else {
-      req.reply([])
-      return
-    }
-
     let uri = req.params.textDocument.uri
     variableTypeInfos(uri, req.params.range) { infosResult in
       do {
@@ -1317,8 +1310,8 @@ extension SwiftLanguageServer {
             let label = ": \(info.printedType)"
             return InlayHint(
               position: position,
-              kind: .type,
               label: .string(label),
+              kind: .type,
               textEdits: [
                 TextEdit(range: position..<position, newText: label)
               ]

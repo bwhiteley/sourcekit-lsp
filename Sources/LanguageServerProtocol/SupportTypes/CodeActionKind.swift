@@ -21,6 +21,9 @@ public struct CodeActionKind: RawRepresentable, Codable, Hashable {
     self.rawValue = rawValue
   }
 
+  /// Empty kind.
+  public static let empty: CodeActionKind = CodeActionKind(rawValue: "")
+
   /// QuickFix action, such as FixIt.
   public static let quickFix: CodeActionKind = CodeActionKind(rawValue: "quickfix")
 
@@ -43,4 +46,11 @@ public struct CodeActionKind: RawRepresentable, Codable, Hashable {
 
   /// Organize imports action.
   public static let sourceOrganizeImports: CodeActionKind = CodeActionKind(rawValue: "source.organizeImports")
+
+   /// Base kind for a 'fix all' source action: `source.fixAll`.
+   ///
+   /// 'Fix all' actions automatically fix errors that have a clear fix that
+   /// do not require user input. They should not suppress errors or perform
+   /// unsafe fixes such as generating new types or classes.
+  public static let sourceFixAll: CodeActionKind = CodeActionKind(rawValue: "source.fixAll")
 }

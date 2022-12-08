@@ -60,11 +60,11 @@ extension SwiftLanguageServer {
     if req.params.context?.triggerKind == .triggerFromIncompleteCompletions {
       guard let currentSession = currentCompletionSession else {
         log("triggerFromIncompleteCompletions with no existing completion session", level: .warning)
-        return req.reply(.failure(.cancelled))
+        return req.reply(.failure(.serverCancelled))
       }
       guard currentSession.uri == snapshot.document.uri, currentSession.utf8StartOffset == offset else {
         log("triggerFromIncompleteCompletions with incompatible completion session; expected \(currentSession.uri)@\(currentSession.utf8StartOffset), but got \(snapshot.document.uri)@\(offset)", level: .warning)
-        return req.reply(.failure(.cancelled))
+        return req.reply(.failure(.serverCancelled))
       }
       session = currentSession
     } else {
@@ -175,12 +175,12 @@ extension SwiftLanguageServer {
         kind: kind?.asCompletionItemKind(self.values) ?? .value,
         detail: typeName,
         documentation: docBrief != nil ? .markupContent(MarkupContent(kind: .markdown, value: docBrief!)) : nil,
+        deprecated: notRecommended ?? false,
         sortText: nil,
         filterText: filterName,
-        textEdit: textEdit,
         insertText: text,
         insertTextFormat: isInsertTextSnippet ? .snippet : .plain,
-        deprecated: notRecommended ?? false
+        textEdit: textEdit.map(CompletionItemEdit.textEdit)
       ))
 
       return true
