@@ -86,9 +86,9 @@ final class SwiftInterfaceTests: XCTestCase {
     try ws.buildAndIndex()
     let call = ws.testLoc("Lib.foo:call")
     try ws.openDocument(call.url, language: .swift)
-    let workspace = try ws.testServer.server!.queue.sync {
+    let workspace = try XCTUnwrap(ws.testServer.server?.queue.sync {
       try XCTUnwrap(ws.testServer.server?.workspaceForDocument(uri: call.docUri))
-    }
+    })
     let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: call.docUri,
                                                                                .swift,
                                                                                in: workspace))
@@ -114,7 +114,8 @@ final class SwiftInterfaceTests: XCTestCase {
       expectation.fulfill()
     })
     
-    _ = try ws.sk.sendSync(DefinitionRequest(
+    // Send an arbitrary request through the front door first or SourceKitServer won't be properly initialized. 
+    _ = try ws.sk.sendSync(HoverRequest(
       textDocument: call.docIdentifier,
       position: Position(line: 0, utf16index: 8)))
     swiftLangServer.openInterface(request)

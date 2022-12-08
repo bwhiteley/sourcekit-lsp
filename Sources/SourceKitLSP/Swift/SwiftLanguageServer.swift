@@ -157,7 +157,8 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
     self.documentManager = DocumentManager()
     self.state = .connected
     self.reopenDocuments = reopenDocuments
-    self.generatedInterfacesPath = try SwiftLanguageServer.generatedInterfacesPath(overrideInterfacesPath: options.generatedInterfacesPath?.asURL)
+    self.generatedInterfacesPath = options.generatedInterfacesPath.asURL
+    try FileManager.default.createDirectory(at: generatedInterfacesPath, withIntermediateDirectories: true)
   }
 
   public func canHandle(workspace: Workspace) -> Bool {
@@ -264,19 +265,6 @@ public final class SwiftLanguageServer: ToolchainLanguageServer {
     })
   }
   
-  /// Obtain the path of the directory to write generated module interfaces.
-  private static func generatedInterfacesPath(overrideInterfacesPath: URL?) throws -> URL {
-    if let overridePath = overrideInterfacesPath {
-      try FileManager.default.createDirectory(at: overridePath, withIntermediateDirectories: true)
-      return overridePath
-    } else {
-      let tempFolderURL = URL(fileURLWithPath: NSTemporaryDirectory())
-      let genFolder = tempFolderURL.appendingPathComponent("GeneratedInterfaces", isDirectory: true)
-      try FileManager.default.createDirectory(at: genFolder, withIntermediateDirectories: true)
-      return genFolder
-    }
-  }
-
   /// Publish diagnostics for the given `snapshot`. We withhold semantic diagnostics if we are using
   /// fallback arguments.
   ///
