@@ -78,6 +78,7 @@ final class SwiftInterfaceTests: XCTestCase {
     let location = try XCTUnwrap(locations.first)
     XCTAssertTrue(location.uri.pseudoPath.hasSuffix("/Foundation.swiftinterface"))
     let fileContents = try XCTUnwrap(location.uri.fileURL.flatMap({ try String(contentsOf: $0, encoding: .utf8) }))
+    // Sanity-check that the generated Swift Interface contains Swift code
     XCTAssertTrue(fileContents.hasPrefix("import "))
   }
   
@@ -89,9 +90,7 @@ final class SwiftInterfaceTests: XCTestCase {
     let workspace = try XCTUnwrap(ws.testServer.server?.queue.sync {
       try XCTUnwrap(ws.testServer.server?.workspaceForDocument(uri: call.docUri))
     })
-    let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: call.docUri,
-                                                                               .swift,
-                                                                               in: workspace))
+    let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: call.docUri, .swift, in: workspace))
     let expectation = expectation(description: "open interface request")
     let openInterface = OpenInterfaceRequest(textDocument: call.docIdentifier, name: "lib")
     let request = Request(openInterface, id: .number(1), clientID: ObjectIdentifier(swiftLangServer),
