@@ -85,14 +85,14 @@ final class SwiftInterfaceTests: XCTestCase {
   func testOpenInterface() throws {
     guard let ws = try staticSourceKitSwiftPMWorkspace(name: "SwiftPMPackage") else { return }
     try ws.buildAndIndex()
-    let call = ws.testLoc("Lib.foo:call")
-    try ws.openDocument(call.url, language: .swift)
+    let importedModule = ws.testLoc("lib:import")
+    try ws.openDocument(importedModule.url, language: .swift)
     let workspace = try XCTUnwrap(ws.testServer.server?.queue.sync {
-      try XCTUnwrap(ws.testServer.server?.workspaceForDocument(uri: call.docUri))
+      try XCTUnwrap(ws.testServer.server?.workspaceForDocument(uri: importedModule.docUri))
     })
-    let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: call.docUri, .swift, in: workspace))
+    let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: importedModule.docUri, .swift, in: workspace))
     let expectation = expectation(description: "open interface request")
-    let openInterface = OpenInterfaceRequest(textDocument: call.docIdentifier, name: "lib")
+    let openInterface = OpenInterfaceRequest(textDocument: importedModule.docIdentifier, name: "lib")
     let request = Request(openInterface, id: .number(1), clientID: ObjectIdentifier(swiftLangServer),
                           cancellation: CancellationToken(), reply: { (result: Result<OpenInterfaceRequest.Response, ResponseError>) in
       do {
@@ -113,10 +113,10 @@ final class SwiftInterfaceTests: XCTestCase {
       expectation.fulfill()
     })
     
-    // Send an arbitrary request through the front door first or SourceKitServer won't be properly initialized. 
+    // Send an arbitrary request through the front door first or SourceKitServer won't be properly initialized.
     _ = try ws.sk.sendSync(HoverRequest(
-      textDocument: call.docIdentifier,
-      position: Position(line: 0, utf16index: 8)))
+      textDocument: importedModule.docIdentifier,
+      position: importedModule.position))
     swiftLangServer.openInterface(request)
     
     waitForExpectations(timeout: 15)
@@ -125,12 +125,12 @@ final class SwiftInterfaceTests: XCTestCase {
   func testSwiftInterfaceAcrossModules() throws {
     guard let ws = try staticSourceKitSwiftPMWorkspace(name: "SwiftPMPackage") else { return }
     try ws.buildAndIndex()
-    let call = ws.testLoc("Lib.foo:call")
-    try ws.openDocument(call.url, language: .swift)
+    let importedModule = ws.testLoc("lib:import")
+    try ws.openDocument(importedModule.url, language: .swift)
     let _resp = try withExtendedLifetime(ws) {
       try ws.sk.sendSync(DefinitionRequest(
-        textDocument: call.docIdentifier,
-        position: Position(line: 0, utf16index: 8)))
+        textDocument: importedModule.docIdentifier,
+        position: importedModule.position))
     }
     let resp = try XCTUnwrap(_resp)
     guard case .locations(let locations) = resp else {
