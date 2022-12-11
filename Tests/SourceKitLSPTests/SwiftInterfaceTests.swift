@@ -87,41 +87,20 @@ final class SwiftInterfaceTests: XCTestCase {
     try ws.buildAndIndex()
     let importedModule = ws.testLoc("lib:import")
     try ws.openDocument(importedModule.url, language: .swift)
-    let workspace = try XCTUnwrap(ws.testServer.server?.queue.sync {
-      try XCTUnwrap(ws.testServer.server?.workspaceForDocument(uri: importedModule.docUri))
-    })
-    let swiftLangServer = try XCTUnwrap(ws.testServer.server?._languageService(for: importedModule.docUri, .swift, in: workspace))
-    let expectation = expectation(description: "open interface request")
     let openInterface = OpenInterfaceRequest(textDocument: importedModule.docIdentifier, name: "lib")
-    let request = Request(openInterface, id: .number(1), clientID: ObjectIdentifier(swiftLangServer),
-                          cancellation: CancellationToken(), reply: { (result: Result<OpenInterfaceRequest.Response, ResponseError>) in
-      do {
-        let interfaceDetails = try result.get()
-        XCTAssertTrue(interfaceDetails.uri.pseudoPath.hasSuffix("/lib.swiftinterface"))
-        let fileContents = try XCTUnwrap(interfaceDetails.uri.fileURL.flatMap({ try String(contentsOf: $0, encoding: .utf8) }))
-        XCTAssertTrue(fileContents.contains("""
+    let interfaceDetails = try XCTUnwrap(ws.sk.sendSync(openInterface))
+    XCTAssertTrue(interfaceDetails.uri.pseudoPath.hasSuffix("/lib.swiftinterface"))
+    let fileContents = try XCTUnwrap(interfaceDetails.uri.fileURL.flatMap({ try String(contentsOf: $0, encoding: .utf8) }))
+    XCTAssertTrue(fileContents.contains("""
           public struct Lib {
-          
+
               public func foo()
-          
+
               public init()
           }
           """))
-      } catch {
-        XCTFail(error.localizedDescription)
-      }
-      expectation.fulfill()
-    })
-    
-    // Send an arbitrary request through the front door first or SourceKitServer won't be properly initialized.
-    _ = try ws.sk.sendSync(HoverRequest(
-      textDocument: importedModule.docIdentifier,
-      position: importedModule.position))
-    swiftLangServer.openInterface(request)
-    
-    waitForExpectations(timeout: 15)
   }
-
+  
   func testSwiftInterfaceAcrossModules() throws {
     guard let ws = try staticSourceKitSwiftPMWorkspace(name: "SwiftPMPackage") else { return }
     try ws.buildAndIndex()

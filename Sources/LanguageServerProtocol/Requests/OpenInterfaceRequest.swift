@@ -14,7 +14,7 @@
 /// **(LSP Extension)**
 public struct OpenInterfaceRequest: TextDocumentRequest, Hashable {
   public static let method: String = "textDocument/openInterface"
-  public typealias Response = InterfaceDetails
+  public typealias Response = InterfaceDetails?
 
   /// The document whose compiler arguments should be used to generate the interface.
   public var textDocument: TextDocumentIdentifier
